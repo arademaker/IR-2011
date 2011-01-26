@@ -1,0 +1,348 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage[margin=2.5cm,a4paper]{geometry}
+
+\begin{document}
+
+% \setlength{\columnsep}{20pt}
+% \setlength{\columnseprule}{.5pt}
+
+\title{Introdução ao R -- 2011 \\ Roteiro da aula 4~\footnote{Adaptado
+  de \cite{rbegin}.}}
+\author{Alexandre Rademaker}
+\maketitle
+
+<<echo=FALSE>>=
+options(width=60)
+@ 
+
+
+\section{Strings}
+
+Completando o material dos slides, em sala trabalhamos em um exemplo
+de uso das funções que lidam com strings. Vimos o caso de recuperação
+de dados de cotações do site da
+UOL.~\footnote{\url{http://economia.uol.com.br/cotacoes/}}. 
+
+Pensando no desenvolvimento de uma função em R para recuperação de
+dados do site da UOL, o primeiro passo seria pensar em uma forma de
+construir a URL onde os parâmetros da consulta são passados como
+argumentos. Um exemplo desta url está na tabela~\ref{tab:url}. 
+
+\begin{table}[htbp]
+\begin{center}
+\begin{small}
+\begin{tabular}{|p{.95\textwidth}|}
+\hline
+\url{http://cotacoes.economia.uol.com.br/acao/cotacoes-historicas.html?codigo=PETR4.SA&beginDay=1&beginMonth=1&beginYear=2008&endDay=9&endMonth=11&endYear=2010&size=200&page=1} \\
+\hline
+\end{tabular}
+\end{small}
+\caption{Exemplo de url com parâmetros}\label{tab:url}
+\end{center}
+\end{table}
+
+No trecho abaixo, desconstruimos os parâmetros da url da
+tabela~\ref{tab:url}. Consulte a documentação das funções
+\texttt{unlist}, \texttt{strsplit} para detalhes.
+
+<<results=hide,echo=FALSE>>=
+url <- "http://cotacoes.economia.uol.com.br/acao/cotacoes-historicas.html?codigo=PETR4.SA&beginDay=1&beginMonth=1&beginYear=2008&endDay=9&endMonth=11&endYear=2010&size=200&page=1"
+@ 
+
+<<>>=
+p <- unlist(strsplit(strsplit(strsplit(url, "?", fixed=TRUE)[[1]][2],"&")[[1]],"="))
+p
+@ 
+
+Os nomes e valores dos parâmetros agora podem ser facilmente separados:
+
+<<>>=
+p[1:length(p) %% 2 == 0]
+p[1:length(p) %% 2 != 0]
+@ 
+
+No trecho seguinte, realizamos a operação inversa. A partir de uma
+variável com o caminho base do serviço, e de um vetor com nomes para
+cada posição:
+
+<<>>=
+base <- "http://cotacoes.economia.uol.com.br/acao/cotacoes-historicas.html"
+params <- c(codigo = "PETR4.SA",
+            beginDay = 1,
+            beginMonth = 1,
+            beginYear = 2008,
+            endDay = 9,
+            endMonth = 11,
+            endYear = 2010,
+            size = 200,
+            page = 1)
+@ 
+
+
+A url completa para a requisição é facilmente construída:
+
+<<>>=
+url <- paste(base,paste(apply(cbind(names(params),params), 1,
+                              paste, collapse="="),
+                        collapse="&"), 
+             sep = "?")
+@ 
+
+
+\section{Entrada de dados}
+
+Vimos várias formas de fazer a entrada de dados no R. Vide slides com
+links relevantes. A forma mais comum de entrada de dados é a
+recuperação de dados do Excel. Vimos que isto pode ser feito de duas
+formas, principalmente:
+
+\begin{itemize}
+  \item No Excel, os dados podem ser salvos no formato \texttt{txt} ou
+    \texttt{csv}. E estes arquivos importados no R.
+  \item No Excel, podemos selecionar uma área qualquer, copiar para a
+   ``área de transferência'' (clipboard) e  ``colar'' os dados no R.
+\end{itemize} 
+
+A operação de copiar/colar dados da área de transferência para o R é
+comentada em dois endereços: 
+
+\begin{itemize}
+ \item \url{https://stat.ethz.ch/pipermail/r-help/2005-February/066319.html} 
+ \item \url{http://www.johndcook.com/r_excel_clipboard.html}
+\end{itemize}
+    
+No Windows, o comando seria:
+
+<<eval=FALSE>>=
+a <- read.table(file("clipboard"), sep="\t", dec=",")
+@ 
+
+Em geral, a função mais usada para importação de dados para o R é o
+\texttt{read.table}, bastante flexível e com um grande variedade de
+argumentos que controlam seu comportamento.
+
+<<>>=
+Squid <- read.table(file = "squidGSI.txt", header = TRUE)
+str(Squid, vec.len = 1)
+names(Squid)
+@ 
+
+Vejam, por exemplo, o que aconteceria se o separador de casas
+decimais errado fosse informado. Observem o tipo da coluna \texttt{GSI}.
+
+<<>>=
+Squid2 <- read.table(file = "squidGSI.txt", dec = ",", header = TRUE)
+str(Squid2, vec.len = 1)
+@ 
+
+Outro exemplo que mostramos em sala foi o comportamento da função com
+espaços nos nomes das variáveis. Se o separador de campos não for
+informado para o arquivo \texttt{squidGSI1.txt}, a função
+\texttt{read.table} irá retornar um erro, pois na primeira linha ela
+encontrará um número diferente de valores que as demais, sete.
+
+<<>>=
+Squid3 <- read.table(file = "squidGSI1.txt", dec = ",", header = TRUE, sep = "\t")
+@ 
+
+Na documentação da função \texttt{read.table}, está claro que o
+separador de campos padrão é um ou mais espaços, tabulações e quebra
+de linhas. No comando acima, restringimos o separador para apenas
+tabulações, evitando que a string com espaço ``GSI Test'' seja
+entendida como dois valores.
+
+Outro problema comum é a ausência de dados em algumas linhas. Duas
+coisas podem ocorrer neste caso: (1) o valor de uma dada variável
+(coluna do arquivo) em uma dada observação (linha do arquivo) pode ser
+omitido; ou/e (2) um valor diferente da string \texttt{NA} pode ser
+usado para sinalizar a ausência da informação.
+
+No arquivo \texttt{squidGSI2.txt}, simulamos os dois casos. No comando
+abaixo, como mantivemos o argumento do separador, a função entendeu
+que na oitava observação faltava o valor para a variável
+\texttt{Year}. Mas vejam como a variável \texttt{Month} passou a ser
+lida como \texttt{Factor} pelo fato do valor \texttt{-} ter sido
+encontrado na décima-segunda observação.
+
+<<>>=
+Squid4 <- read.table("squidGSI2.txt", head=TRUE, sep="\t")
+head(Squid4, 15)
+str(Squid4)
+@ 
+
+Para contornar este problema, podemos usar o argumento
+\texttt{na.strings}, vide documentação.
+
+<<>>=
+Squid5 <- read.table("squidGSI2.txt", head=TRUE, sep="\t", na.strings = "-")
+head(Squid5, 15)
+str(Squid5)
+@ 
+
+Nos dois trechos acima, a função \texttt{head} é usada para mostrar as
+primeiras linhas dos data.frames.
+
+A função \texttt{read.table} também pode ler diretamente arquivos
+compactados. No trecho a seguir, o primeiro caso é a leitura de
+arquivos zip que, por poderem conter mais de um arquivo, precisam ser
+lidos com auxílio da função \texttt{unz}. No segundo caso, arquivos
+Gzip~\footnote{GNU Zip, http://www.gzip.org/}, podem ser lidos
+diretamente pela \texttt{read.table}.
+
+<<>>=
+dados1 <- read.table(unz("antarctic-birds.zip", "antarctic-birds.txt"))
+dados2 <- read.table("antarctic-birds.txt.gz")
+@ 
+
+Não apenas arquivos locais podem ser lidos, urls também podem ser
+passadas diretamente para a \texttt{read.table}.
+
+<<>>=
+params <- c(key="0AmWelpCNYLymdDFkbGdjLWhTTWxUd2hndWM4d2VvR3c", hl="en", single="true", gid="0", output="csv")
+url <- paste("http://spreadsheets.google.com/pub", 
+             paste(apply(cbind(names(params), params), 1, paste, collapse="="), 
+                   collapse="&"), sep="?")
+d <- read.csv(url, header=FALSE)
+str(d, vec.len = 1)
+@ 
+
+Neste caso, estamos lendo uma planilha no Google Docs. A planilha foi
+previamente compartilhada para que possa ser lida por qualquer pessoa
+que conheça a url e sem autenticação. Para saber mais sobre como
+interagir com o Google Docs, sugiro a leitura dos links:
+
+\begin{itemize}
+  \item \url{http://bit.ly/haX197}
+  \item \url{http://bit.ly/fo8uc1}
+  \item \url{http://www.omegahat.org/RGoogleDocs/}
+\end{itemize}
+
+Se houver interesse, podemos falar mais sobre a importação de dados de
+bancos de dados relacionais como o Oracle, SQL Server ou MySQL. O
+pacote \texttt{RODBC}~\cite{rodbc}, usado para leitura de dados de BD
+relacionais é, no entanto, muito bem documentado.
+
+
+\section{Manipulando data.frames}
+
+Como uma revisão da aula anterior, verificamos novamente algumas
+formas de filtrar lihas e colunas de um data.frame:
+
+<<>>=
+tmp <- Squid$Sex
+head(tmp)
+Sel <- Squid$Sex == 1
+SquidF <- Squid[Sel,]
+SquidM <- Squid[Squid$Sex == 2, ]
+@ 
+
+De fato, filtros podem ser feitos com expressões booleanas complexas:
+
+<<>>=
+a <- Squid[Squid$Location == 1 & Squid$Year == 1, ]
+b <- Squid[Squid$Sex == 1 & 
+           (Squid$Location == 1 | Squid$Location == 2),]
+@ 
+
+A idéia de filtrar um data.frame a partir de expressões booleanas
+sobre os próprios componentes do data.frame é bastante flexível, mas
+requer cuidados. O trecho a seguir, o segundo filtro foi feito de
+forma errada, dado que foi feito sobre o data.frame \texttt{SquidF},
+que tem quantidade de linhas diferentes do data.frame original.
+
+<<>>=
+SquidF <- Squid[Squid$Sex == 1, ]
+nrow(SquidF) 
+nrow(Squid)
+SquidF1 <- SquidF[Squid$Location == 1, ]
+@ 
+
+Uma função úteil para filtragem tanto de linhas quanto de colunas de
+um data.frame é a \texttt{subset}, consulte a documentação. A seguir,
+um pequeno exemplo, recuperamos as linhas do data.frame \texttt{Squid}
+onde a variável \texttt{Location} é igual a um. Além disso,
+recuperamos apenas as colunas \texttt{Sex}, \texttt{Location} e
+\texttt{Sample}.
+
+<<>>=
+a <- subset(Squid, Location == 1, c("Sex","Location","Sample"))
+head(a)
+@  
+
+Também vimos na última aula como podemos ordenar valores de um
+vetor. No caso de data.frames, a ordenação dos valores de uma coluna
+pode ser usada para reordenar as linhas do data.frame:
+
+<<>>=
+Ord1 <- order(Squid$GSI)
+tmp <- Squid[Ord1, ]
+head(tmp)
+@ 
+
+Obviamente, não precisamos da variável \texttt{Ord1}, poderíamos
+simplesmente ter digitado:
+
+<<>>=
+tmp <- Squid[order(Squid$GSI), ]
+head(tmp)
+@ 
+
+\section{Factors}
+
+Recordamos a importância de armazenar variáveis categórias como
+variávies do tipo \texttt{Factor}.
+
+<<>>=
+Squid$fLocation <- factor(Squid$Location)
+Squid$fSex <- factor(Squid$Sex, levels = c(1,2), labels=c("M","F"))
+@ 
+
+Funções como \texttt{lm} e \texttt{boxplot} lidam de forma diferente
+com diferentes tipos de variáveis. Quando variáveis categóricas são
+armazenadas como números, são interpretadas como em um intervalo
+contínuo e não discreto. 
+
+\begin{figure}
+\begin{center}
+<<fig=TRUE,eps=FALSE>>=
+boxplot(GSI ~ fSex, data = Squid)
+@ 
+\end{center}
+\caption{boxplot do data.frame Squid}
+\end{figure}
+
+A função \texttt{lm} também comporta-se de forma completamente
+diferente com variáveis categórias ou variáveis numéricas. No trecho a
+seguir, a função \texttt{lm} para cálculo da regressão linear é
+executa usando as variáveis categóricas.
+
+<<>>=
+M1 <- lm(GSI ~ fSex + fLocation, data = Squid)
+summary(M1)
+@ 
+
+No próximo trecho, para comparação, são usadas as variáveis
+numéricas. 
+
+<<>>=
+M2 <- lm(GSI ~ Sex + Location, data = Squid)
+summary(M2)
+@ 
+
+Variáveis categórias também podem ter seus níveis trocados de ordem:
+
+<<>>=
+Squid$fLocation <- factor(Squid$Location, levels = c(2, 3, 1, 4))
+summary(Squid$fLocation)
+@ 
+
+\bibliographystyle{plain}
+\bibliography{r}
+
+\end{document}

@@ -1,0 +1,141 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\mode<presentation>
+{
+  \usetheme[secheader]{Boadilla}
+  \setbeamercovered{transparent}
+}
+
+\title{Introdução ao R}
+\author{Alexandre Rademaker}
+
+\begin{document}
+\setkeys{Gin}{width=0.6\textwidth}
+
+\frame{\titlepage}
+
+\frame{\frametitle{Por que R?}
+
+\begin{small}
+\begin{itemize}
+ \item\url{http://www.r-project.org/}
+ \item\url{http://sites.google.com/site/r4statistics/popularity}
+ \item\url{http://bits.blogs.nytimes.com/2009/01/08/r-you-ready-for-r/}
+ \item\url{http://planetr.stderr.org/}
+ \item\url{http://www.r-bloggers.com/}
+ \item\url{http://r-project.markmail.org/}
+ \item\url{http://en.wikipedia.org/wiki/R_(programming_language)}
+ \item\url{http://bit.ly/dGQXpL}
+\end{itemize}
+\end{small}
+}
+
+\frame{\frametitle{Primeira impressão}
+
+\begin{itemize}
+  \item Download
+  \item Instalação
+  \item O ambiente
+  \item Editores
+\end{itemize}
+}  
+
+\frame[containsverbatim]{\frametitle{A ``arte'' de programar}
+  
+\begin{verbatim}
+ISIT<-read.table("ISIT.txt",header=TRUE)
+library(lattice)
+xyplot(Sources~SampleDepth|factor(Station),data=ISIT,
+xlab="Sample Depth",ylab="Sources",
+strip=function(bg='white', ...)
+strip.default(bg='white', ...),
+panel = function(x, y) {
+panel.grid(h=-1, v= 2)
+I1<-order(x)
+llines(x[I1], y[I1],col=1)})
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{A ``arte'' de programar}
+  
+\begin{verbatim}
+ISIT<-read.table("ISIT.txt",header=TRUE)
+library(lattice)
+xyplot(Sources ~ SampleDepth | factor(Station), 
+       data=ISIT,
+       xlab="Sample Depth", ylab="Sources",
+       strip = function(bg='white', ...) {
+         strip.default(bg='white', ...)
+       },
+       panel = function(x, y) {
+         panel.grid(h=-1, v= 2)
+         I1<-order(x)
+         llines(x[I1], y[I1],col=1)
+       })
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{A ``arte'' de programar}
+
+\begin{center}
+<<fig=TRUE,echo=FALSE,eps=FALSE>>=
+ISIT<-read.table("ISIT.txt",header=TRUE)
+library(lattice)
+p <- xyplot(Sources ~ SampleDepth | factor(Station), 
+       data=ISIT,
+       xlab="Sample Depth", ylab="Sources",
+       strip = function(bg='white', ...) {
+         strip.default(bg='white', ...)
+       },
+       panel = function(x, y) {
+         panel.grid(h=-1, v= 2)
+         I1<-order(x)
+         llines(x[I1], y[I1],col=1)
+       })
+print(p)
+@ 
+\end{center}
+}
+
+\frame[containsverbatim]{\frametitle{Help!}
+<<eval=FALSE>>=
+?boxplot
+help(boxplot)
+@
+
+<<>>=
+str(InsectSprays)
+@ 
+
+<<eval=FALSE>>=
+?InsectSprays
+@ 
+}
+
+\frame[containsverbatim]{\frametitle{Packages}
+
+<<eval=FALSE>>=
+library(lattice)
+install.packages("lattice")
+update.packages()
+@   
+}
+
+\frame[containsverbatim]{\frametitle{Quit! Mas...}
+  
+<<eval=FALSE>>=
+q()
+q(save="no")
+setwd(file="c:\\")
+getwd()
+rm(list = ls(all=TRUE))
+citation()
+@ 
+}
+
+\end{document}
+

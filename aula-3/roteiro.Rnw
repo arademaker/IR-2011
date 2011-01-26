@@ -1,0 +1,500 @@
+\documentclass[twocolumn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage{enumerate}
+\usepackage{amsmath}
+
+\begin{document}
+
+\setlength{\columnsep}{20pt}
+% \setlength{\columnseprule}{.5pt}
+
+\title{Introdução ao R -- 2011 \\ Roteiro da aula 3}
+\author{Alexandre Rademaker}
+\maketitle
+
+<<echo=FALSE>>=
+options(width=45)
+@ 
+
+\begin{abstract}
+  Roteiro baseado no livro: A Beginner's Guide to R (2009), Zuur,
+  Ieno, Meesters. Springer.
+\end{abstract}  
+
+\section{Vetores}
+
+Estruturas de dados unidimensionais. A forma mais comum para criação
+de vetores é através da função $c$, de concatenação.
+
+<<>>=
+Wingcrd <- c(59, 55, 53.5, 55, 52.5, 57.5, 53, 55)
+Tarsus <- c(22.3, 19.7, 20.8, 20.3, 20.8, 21.5, 20.6, 21.5)
+Head <- c(31.2, 30.4, 30.6, 30.3, 30.3, 30.8, 32.5, NA)
+Wt <- c(9.5, 13.8, 14.8, 15.2, 15.5, 15.6, 15.6, 15.7)
+@ 
+
+Na aula, para evitar a digitação destes números, também usamos a
+função $sample$:
+
+<<>>=
+Wingcrd <- sample(0:100, 8)
+Tarsus <- sample(0:100, 8)
+Head <- sample(0:100, 8)
+Wt <- sample(0:100, 8)
+@ 
+
+E introduzimos no vetor $Head$ um \verb|NA|:
+
+<<>>=
+Head[8] <- NA
+Head
+@ 
+
+Vetores também podem armazenar cadeias de caracteres, também chamadas
+de ``strings''. Strings são sequencias de caracteres entre aspas.
+
+<<>>=
+colors <- c("red", "yellow", "blue")
+more.colors <- c(colors, "green", "magenta", "cyan")
+@ 
+
+Mas o importante é entender que vetores podem conter apenas um tipo de
+dado. Se um elemento for ``string'', todos os demais também serão: 
+
+<<>>=
+z <- c("red","green", 1)
+z
+@ 
+
+Vetores de caracteres são muito usados em R, principalmente para
+manipulação dos nomes de linhas e colunas dos ``data.frames''. Alguns
+operações comuns são:
+
+Seleção de partes da string:
+
+<<>>=
+substr(colors, 1, 2)
+@ 
+
+Concatenação de strings:
+
+<<>>=
+paste(colors, "flowers")
+paste("several ", colors, "s", sep="")
+paste("I like", colors, collapse=", ")
+@ 
+
+Números são transformados em ``strings'' de forma automática, quando
+necessário. Observe abaixo a diferença entre o argumento ``sep'' e
+``collapse''. Experimente.
+
+<<>>=
+paste(1:10, collapse = ", ")
+paste(1:10, 1:10, sep = ",")
+@ 
+
+Também falamos sobre expressões regulares. As funções $grep$ e $gsub$
+usam expressões regulares para casamento de padrões em cadeias de caracteres:
+
+<<>>=
+vars <- c(paste("V", 100:105, sep=""), "Head", "Squid", "Tarsus", "Wingcrd", "Wt")
+vars
+grep("^V", vars)
+vars[grep("^V", vars)]
+@ 
+
+A expressão regular \verb|^V| significa ``todas as cadeias de caracteres
+iniciadas com ``V''. Agora vamos selecionar todas as cadeias
+terminadas com ``d''.
+
+<<>>=
+vars[grep("d$", vars)]
+@ 
+
+Expressões regulares são muito importantes para manipulação de
+textos. Infelizmente, apenas introduzimos o assunto. Pode-se fazer
+muito mais do que apenas selecionar cadeias que começam ou terminam
+com determinados caracteres. Por exemplo, podemos selecionar as
+cadeias que contém números:
+
+<<>>=
+vars[grep("[0-9]+", vars)]
+@ 
+
+Aqui o operador $+$ foi usado para significar ``uma ou mais
+repetições. O operador $[$ foi usado para indicar um conjunto dos
+caracteres possíveis. O operador $-$ foi usado para definir uma faixa
+de valores de $0$ à $9$. Ou seja, definimos um padrão que ``casa'' com
+qualquer sequência de algarismos. 
+
+
+\section{Variáveis categóricas}
+
+O tipo ``factor'' do R armazena variáveis categóricas. 
+
+<<>>=
+grp1 <- c("control", "treatment", "control",  "treatment")
+fgrp1 <- factor(grp1)
+@ 
+
+Vejam a diferença:
+
+<<>>=
+str(grp1)
+str(fgrp1)
+@ 
+
+Ou ainda, usando a função $summary$:
+
+<<>>=
+summary(grp1)
+summary(fgrp1)
+@ 
+
+Factors podem ser transformados em números ou cadeias de caracteres,
+bastando a seleção dos seus níveis ou rótulos:
+
+<<>>=
+as.integer(fgrp1)
+levels(fgrp1)
+levels(fgrp1)[as.integer(fgrp1)]
+@ 
+
+\section{Valores Booleanos}
+
+Também chamados, ``valores de verdade''. Vetores booleanos podem ser
+usados para selecionar elementos de vetores:
+
+<<>>=
+a <- c(TRUE, FALSE, FALSE, TRUE)
+b <- c(13, 7, 8, 2)
+b[a]
+@ 
+
+Quando necessários, valores booleanos são convertidos para numéricos
+onde \texttt{FALSE} tem valor $0$ e \texttt{TRUE} valor $1$:
+
+<<>>=
+sum(a)
+@ 
+
+O inverso também pode ocorrer, conversão de valores numéricos para
+valores booleanos. O zero é o \texttt{FALSE} e qualquer outro valor é \texttt{TRUE}:
+
+<<>>=
+a & (b - 2)
+@ 
+
+R contém todos os operadores básicos para trabalhamos com valores booleanos:
+
+<<>>=
+!a
+c <- c(TRUE, TRUE, FALSE, TRUE)
+a & c
+a && c
+a | c
+a || c
+@ 
+
+Observem a diferença entre os operadores \verb|&| (\verb|&&|) e \verb$|$
+(\verb$||$). As versões curtas operam elemento à elemento dos vetores. As
+versões longas operam apenas nas primeiras posições dos vetores e
+sempre retornam valores escalares.
+
+Em geral, valores booleanos são criados quando executamos comparações
+ou, de forma mais genérica, operações relacionais, com outros tipos de
+valores. Seja:
+
+<<>>=
+a <- c(3, 6, 9)
+b <- c(4, 6, 8)
+@ 
+
+Alguns exemplos de operações relacionais com estes vetores são:
+
+<<>>=
+a < b
+a <= b
+a == 4
+a != 4
+a <= 3
+a[a < b]
+@ 
+
+\section{O valor \texttt{NA}}
+
+Como remover o valor \texttt{NA} de vetores? Vejamos um vetor que já
+construimos na aula anterior:
+
+<<>>=
+alguns.pares <- NULL
+alguns.pares[seq(2,20,2)] <- seq(2,20,2)
+alguns.pares
+@ 
+
+Qualquer comparação com \texttt{NA} resulta em \texttt{NA}:
+
+<<>>=
+NA == 1
+NA == "teste"
+NA == NA
+@ 
+
+Logo, não podemos simplesmente tentar:
+
+<<>>=
+alguns.pares != NA
+@ 
+
+Pois o vetor resultante será todo composto por \texttt{NA}. Mas podemos usar
+a função $is.na$:
+
+<<>>=
+is.na(alguns.pares)
+alguns.pares[!is.na(alguns.pares)]
+@ 
+
+
+\section{Combinando dados} 
+
+Obviamente, é comum precisamos de mais dimensões que apenas 1 para
+nossas estruturas de dados. Podemos combinar vetores formando
+estruturas bidimensionais:
+
+<<>>=
+Z <- cbind(Wingcrd, Tarsus, Head, Wt)
+Z
+dim(Z)
+@  
+
+Então a resposta da função $dim$ é um vetor, logo posso recuperar o
+número de linhas com:
+
+<<>>=
+dim(Z)[1]
+@ 
+
+Além da função $dim$, podemos obter o número de linhas e colunas com:
+
+<<>>=
+nrow(Z)
+ncol(Z)
+@ 
+
+E podemos naturalmente usar o operador ``[`` para selecionar partes da
+nova estrutura bidimensional:
+
+<<>>=
+Z[,1]
+Z[1:8,1]
+Z[2,]
+Z[2,1:4]
+Z[,c(-1,-3)]
+Z[,-c(1,3)]
+@ 
+
+Notem a diferença entre selecionar o valor da primeira linha e segunda
+coluna, primeiro comando, de selecionar o valor da posição 1 e 2,
+segundo comando. No primeiro caso, o operador ``[`` recebeu dois
+argumentos. No segundo caso, recebeu apenas um vetor. Ainda no segundo
+caso, a matriz foi tratada como vetor, de forma contínua.
+
+<<>>=
+Z[1,2]
+Z[c(1,2)]
+@ 
+
+Podemos também combinar os vetores por linhas:
+
+<<>>=
+Z2 <- rbind(Wingcrd, Tarsus, Head, Wt)
+Z2
+@ 
+
+\section{Outra forma de criar vetores e matrizes}
+
+Quando estivemos preocupados com performance, é sempre aconselhável
+inicializar os vetores com seus tamanhos pré-alocados:
+
+<<>>=
+W <- vector(length = 8)
+W[1] <- 59
+W[2] <- 55
+W[3] <- 53.5
+W[4] <- 55
+W[5] <- 52.5
+W[6] <- 57.5
+W[7] <- 53
+W[8] <- 55
+@ 
+
+Na construção de matrizes, vale a mesma regra de reciclagem de
+valores. Abaixo, o valor $10$ foi reciclado, transformado em um vetor
+de $32$ posições com o valor $10$ para ser então ``organizado'' na
+forma de uma matriz.
+
+<<>>=
+matrix(10,nrow = 8, ncol = 4)
+@ 
+
+Esta mesma matriz poderia ser construída apenas com a informação do
+número desejado de linhas, o número de colunas e tamanho do vetor
+passado permitem que o R calcule as colunas necessárias:
+
+<<>>=
+matrix(sample(1:100, 32), nrow = 8)
+@ 
+
+Também podemos atribuir vetores a linhas ou colunas inteiras de
+matrizes:
+
+<<>>=
+Dmat <- matrix(nrow = 8, ncol = 4)
+Dmat[, 1] <- c(59, 55, 53.5, 55, 52.5, 57.5, 53, 55)
+Dmat[, 2] <- c(22.3, 19.7, 20.8, 20.3, 20.8, 21.5,
+                 20.6, 21.5)
+Dmat[, 3] <- c(31.2, 30.4, 30.6, 30.3, 30.3, 30.8,
+                 32.5, NA)
+Dmat[, 4] <- c(9.5, 13.8, 14.8, 15.2, 15.5, 15.6,
+                 15.6, 15.7)
+Dmat
+@ 
+
+E podemos dar nomes as dimensões:
+
+<<>>=
+colnames(Dmat) <- c("Wingcrd", "Tarsus", "Head", "Wt")
+Dmat
+@ 
+
+O mesmo vale para os nomes de linhas. Mas, em geral, as linhas não tem nomes:
+
+<<>>=
+rownames(Dmat)
+rownames(Dmat) <- paste("O", 1:8, sep="")
+Dmat
+@ 
+
+Também podemos passar o resultado da função $cbind$ para a função
+$as.matrix$ que transforma o objeto dado em matriz. Obviamente, neste
+caso isto não é necessário, a saída do cbind já é uma matriz.
+
+<<>>=
+Dmat2 <- as.matrix(cbind(Wingcrd,Tarsus,Head, Wt))
+@ 
+
+\section{Data frames}
+
+Até agora, todas as estruturas, vetores ou matrizes, são forçadas a
+armazenas em todos os seus componentes, o mesmo tipo de dado (números,
+cadeias de caracteres, factors, booleanos). Data frames são estruturas
+de dados bidimensionais onde cada coluna pode conter um tipo de
+dado. A idéia é que dados armazenados em data frames devem ser lidos
+como as linhas representando observações e as colunas os valores
+observados para cada variável.
+
+<<>>=
+Dfrm <- data.frame(WC = Wingcrd, TS = Tarsus,
+                   HD = Head, W = Wt)
+Dfrm
+@ 
+
+Observem a diferença entre a variável $Wt$ do data.frame $Dfrm$ e a
+variável $Wt$ do ambiente. Observem também o uso do operador \verb|$|
+para selecionar uma coluna do data.frame.
+
+<<>>=
+Dfrm$W
+tmp <- Wt
+rm(Wt)
+Dfrm$W
+Wt <- tmp
+rm(tmp)
+@ 
+
+Uma coluna do data.frame é um vetor, e podemos selecionar valores
+usando tudo que já vimos sobre vetores. Em um data.frame, todas as
+colunas devem ter a mesma quantidade de valores, são vetores de igual
+dimensão. Obviamente, algumas posições podem conter $NA$.
+
+
+\section{Listas}
+
+Finalmente, o tipo de dado mais genérico de R, as listas. Listas podem
+conter qualquer ``mix'' de elementos. De diferentes tamanhos e
+tipos. Listas são estruturas recursivas, podem conter outras listas.
+
+<<>>=
+x1 <- c(1,2,3)
+x2 <- sample(letters,5)
+x3 <- 3
+x4 <- matrix(sample(1:100,6),nrow=3, ncol=2)
+@ 
+
+Na criação das listas, podemos ou não dar nomes aos componentes. Vejam
+os dois últimos argumentos abaixo:
+
+<<>>=
+Y <- list(x1 = x1, x2 = x2, x3 = x3, x4, Dfrm)
+Y
+@ 
+
+Para acessar partes de uma lista, podemos usar o operador \verb|[| ou
+\verb|[[|. O primeiro, o mesmo usado para vetores, faz um filtro na
+lista, retornando uma lista filtrada para os elementos solicitados. O
+segundo, recupera apenas um componente da lista, e retorna o
+componente, não uma lista de um componente.
+
+<<>>=
+Y[c(1,5)]
+Y[[5]]
+@ 
+
+Também podemos usar os nomes dos componentes ao invés de seus índices:
+
+<<>>=
+Y["x1"]
+Y[["x1"]]
+@ 
+
+A diferença fica evidênte se observarmos a estrutura do retorno dos
+operadores \verb|[| e \verb|[[|:
+
+<<>>=
+str(Y["x1"])
+str(Y[["x1"]])
+@ 
+
+Por que precisamos de listas? Listas são estruturas bastante
+genéricas, geralmente usadas por funções complexas que precisam
+retornar diferentes informações. 
+
+<<>>=
+MyModel <- lm(WC ~ Wt, data = Dfrm)
+MyModel
+@ 
+
+Experimente no console do R:
+
+<<eval=FALSE>>=
+str(MyModel)
+@ 
+
+A saída é muito grande para colocar aqui neste documento!
+
+Vejam como a função $lm$ pode receber no seu argumento ``data'' pode
+receber um data.frame, permitindo que nos demais argumentos, ao invés
+de passarmos \verb|Dfrm$WC| possamos simplesmente passar o nome da
+variável (coluna) do data.frame nomeado no argumento ``data''. No
+entanto, nem todas as funções podem receber uma argumento ``data''. O
+comando abaixo seria um erro:
+
+<<eval=FALSE>>=
+mean(WC, data = Dfrm)
+@ 
+
+
+\end{document}
+

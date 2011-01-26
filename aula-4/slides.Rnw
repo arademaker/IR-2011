@@ -1,0 +1,114 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\mode<presentation>
+{
+  \usetheme[secheader]{Boadilla}
+  \setbeamercovered{transparent}
+}
+
+\title{Introdução ao R: aula 4}
+\author{Alexandre Rademaker}
+\institute{EMAp/FGV}
+
+\begin{document}
+
+\setkeys{Gin}{width=.8\textwidth}
+
+<<echo=FALSE>>=
+options(width=50)
+set.seed(9876)
+library(igraph)
+@ 
+
+\frame[containsverbatim]{
+<<fig=TRUE,echo=FALSE,eps=FALSE>>=
+g <- read.graph("karate.net", format="pajek")
+d <- get.diameter(g)
+
+E(g)$color <- "grey"
+E(g)$width <- 1
+E(g, path=d)$color <- "red"
+E(g, path=d)$width <- 2
+V(g)$label.color <- "blue"
+V(g)$color  <- "SkyBlue2"
+V(g)[ d ]$label.color <- "black"
+V(g)[ d ]$color <- "red"
+
+plot(g, layout=layout.fruchterman.reingold, 
+     vertex.label.dist=0, vertex.size=15)
+title(main="Diameter of the Zachary Karate Club network",
+      xlab="created by igraph 0.4")
+axis(1, labels=FALSE, tick=TRUE)
+axis(2, labels=FALSE, tick=TRUE)
+@   
+}
+
+
+\frame{\titlepage}
+
+\frame{\frametitle{Agenda}
+\begin{itemize}
+  \item Revisão
+  \item Strings: o que faltou?
+  \item Exemplos
+  \item Filtrando dados: exemplos
+  \item Entrada e saída
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Strings}
+  
+  Contando caracteres e trabalhando com listas retornadas pelo
+  \texttt{strspplit}.
+
+\begin{scriptsize}
+<<>>=
+colors <- c("blue", "red", "green")
+nchar(colors)
+
+text <- c("a", "bb;ccc", "dddd;eeeee;ffffff")
+strsplit(text, ";")
+sapply(strsplit(text, ";"),"[",1)
+@ 
+\end{scriptsize}
+}
+
+\frame[containsverbatim]{\frametitle{Strings: exemplos}
+
+<<>>=
+dados <- c("x=10,y=12,z=15")
+strsplit(strsplit(dados,",")[[1]], "=")
+sapply(lapply(strsplit("ALEXANDRE", NULL), rev), paste, collapse="")
+@ 
+
+}
+
+
+\frame{\frametitle{Importação de dados}
+\begin{itemize}
+  \item Excel to R: copy/paste
+  \item Excel to R: \url{http://cran.r-project.org/web/packages/gdata/}    
+  \item CSV e TXT: read.table e write.table 
+  \begin{itemize}
+   \item Arquivos comprimidos ou não
+   \item Arquivos locais ou não
+  \end{itemize}
+  \item \url{http://www.omegahat.org/RGoogleDocs/}
+  \item \url{http://cran.r-project.org/web/packages/foreign/}
+  \item \url{http://cran.r-project.org/web/packages/RODBC/}
+  \item \url{http://en.wikipedia.org/wiki/NetCDF}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Manipulando data.frames}
+\begin{itemize}
+  \item Exemplos
+  \item função \verb|subset|
+\end{itemize}  
+}  
+
+
+\end{document}

@@ -1,0 +1,61 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\mode<presentation>
+{
+  \usetheme[secheader]{Boadilla}
+  \setbeamercovered{transparent}
+}
+
+\title{Introdução ao R: aula 3}
+\author{Alexandre Rademaker}
+\institute{EMAp/FGV}
+
+\begin{document}
+\setkeys{Gin}{width=.4\textwidth}
+
+<<echo=FALSE>>=
+library(ggplot2)
+library(xtable) 
+
+options(width=50)
+set.seed(9876)
+@ 
+
+\frame{\titlepage}
+
+\frame{\frametitle{Strings}
+\begin{itemize}
+  \item Vetores de caracteres
+  \item substr
+  \item paste
+  \item grep (expressões regulares)
+  \item strsplit
+  \item nchar
+\end{itemize}  
+}
+
+\frame{\frametitle{Boolean}
+\begin{itemize}
+  \item Vetores lógicos
+  \item Operadores lógicos
+  \item Operadores relacionais
+  \item Indexando vetores com vetores lógicos
+\end{itemize}  
+}  
+
+  
+\frame{\frametitle{Combinando dados}
+\begin{itemize}
+  \item ``matrix''
+  \item cbind, rbind
+  \item ``data.frame''
+  \item ``list''
+\end{itemize}
+}
+
+
+\end{document}
+
