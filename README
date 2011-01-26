@@ -5,9 +5,10 @@ Curso de Introdução ao R
 Autor: Alexandre Rademaker 
 
 
-Em cada aula, em geral temos o roteiro e slides. Todos os dois
-materiais com o pacote Sweave. Além de distribuir o PDF, também estão
-no repositório os arquivos com os códigos R.
+Em cada aula, em geral, teremos o roteiro da aula e os slides. Todos
+os dois materiais foram preparados com o pacote Sweave [1]. Além dos
+arquivos PDF, também estão no repositório os arquivos com os códigos
+R e outros arquivos de dados auxiliares.
 
 
 Links
