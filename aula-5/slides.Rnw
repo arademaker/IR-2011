@@ -1,0 +1,385 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\mode<presentation>
+{
+  \usetheme[secheader]{Boadilla}
+  \setbeamercovered{transparent}
+}
+
+\title{Introdução ao R: aula 5}
+\author{Alexandre Rademaker}
+\institute{EMAp/FGV}
+
+\begin{document}
+
+\setkeys{Gin}{width=.6\textwidth}
+
+<<echo=FALSE>>=
+library(zoo)
+options(width=50)
+options(continue=" ")
+@ 
+
+\frame{\titlepage}
+
+\frame{\frametitle{Agenda}
+\begin{itemize}
+  \item Revisão
+  \item Entrada e saída
+  \item Programação
+\end{itemize}
+}
+
+\frame{\frametitle{Importação de dados}
+\begin{itemize}
+  \item Excel to R: copy/paste
+  \item Excel to R: \url{http://cran.r-project.org/web/packages/gdata/}    
+  \item CSV e TXT: read.table e write.table 
+  \begin{itemize}
+   \item Arquivos comprimidos ou não
+   \item Arquivos locais ou não
+  \end{itemize}
+  \item \url{http://www.omegahat.org/RGoogleDocs/}
+  \item \url{http://cran.r-project.org/web/packages/foreign/}
+  \item \url{http://cran.r-project.org/web/packages/RODBC/}
+  \item \url{http://en.wikipedia.org/wiki/NetCDF}
+\end{itemize}
+}
+
+\frame{\frametitle{Mais sobre importação}
+\begin{overprint}
+  
+\onslide<1>
+
+Inspecionando o ambiente:  
+
+\begin{itemize}
+  \item ls, rm
+  \item str
+  \item summary
+\end{itemize} 
+
+\onslide<2>
+
+Entrada e saída:
+  
+\begin{itemize}
+  \item dump
+  \item dput
+  \item load
+  \item save, save.image
+  \item source
+  \item sink(file) e sink()
+\end{itemize}  
+
+\end{overprint}
+}  
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Tabelas}
+  
+\begin{overprint}
+  
+\onslide<1>  
+
+A função \texttt{table} conta combinações:
+  
+<<>>=
+idades <- cut(sample(1:70, 30), c(1,15,24,60,70), 
+              c("criança","adolescente","adulto", "idoso"))
+sexo <- factor(sample(1:2, 30, replace=TRUE), 
+               levels = c(1,2), labels = c("F","M"))
+t <- table(idades, sexo)
+@ 
+
+\onslide<2> 
+
+<<>>=
+t
+@
+
+Inspecionando \texttt{t}:
+
+<<eval=FALSE>>=
+attributes(t)
+mode(t)
+class(t)
+@ 
+
+\onslide<3>
+
+Margens:
+
+<<>>=
+margin.table(t, 1)
+prop.table(t)
+@ 
+
+\onslide<4>
+
+Veja mais, \texttt{addmargins}:
+
+<<>>=
+addmargins(t, margin=c(1,2), FUN=mean, quiet=TRUE)
+@ 
+
+\end{overprint}
+\end{frame}
+
+
+\begin{frame}[containsverbatim]
+  \frametitle{Algumas funções úteis}
+  
+<<>>=
+gl(2, 5, labels = c("nao", "sim"))
+@ 
+
+Dez números de uma distribuição normal com média 10 e desvio padrão 3.
+
+<<>>=
+rnorm(10, mean = 10, sd = 3)
+@   
+\end{frame}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Matrizes}
+
+\begin{overprint}
+
+\onslide<1>
+
+<<>>=
+(m1 <- matrix(c(45, 23, 66, 77, 33, 44), 2, 3))
+(m2 <- matrix(c(5, 3, 466, 54.5, 3.2, -34), 3, 2))
+@ 
+
+\onslide<2>
+
+<<>>=
+m1 %*% m2
+@ 
+
+\onslide<3>
+
+<<>>=
+t(m1)
+@   
+
+\end{overprint}
+\end{frame}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Datas}
+\begin{overprint}
+
+\onslide<1>
+
+<<>>=
+(hoje <- Sys.Date())
+format(hoje, "%d %b %Y")
+seq(hoje, len = 10, by = "1 week")
+c(months(hoje), weekdays(hoje))
+@ 
+
+\onslide<2>
+
+<<>>=
+as.Date("2011-01-26") - as.Date("2010-04-02")
+ISOdate(2001, 1, 1) - ISOdate(2000, 6, 14)
+table(cut(seq(ISOdate(2011, 1, 1), to = ISOdate(2011, 12, 31), by = "day"), "month"))
+@ 
+
+\onslide<3>
+
+Dois tipos de datas/horas: (1) \texttt{POSIXct}, número de segundos
+desde 1970; e (2) \texttt{POSIXlt} datas/horas como uma lista dos
+componentes.
+
+<<>>=
+as.POSIXlt(Sys.time(), "GMT")
+a <- as.POSIXct("2011-01-26 11:00") 
+b <- as.POSIXct("2011-01-01 00:00")
+a - b
+format(Sys.time(), "%a %b %d %X %Y %Z")
+@ 
+
+\onslide<4>
+
+Conversão de tipos:
+
+<<>>=
+x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+strptime(x, "%d%b%Y")
+
+dates <- c("02/27/92", "02/27/92", "01/14/92")
+times <- c("23:03:20", "22:29:56", "01:03:30")
+x <- paste(dates, times)
+strptime(x, "%m/%d/%y %H:%M:%S")
+@ 
+
+\end{overprint}
+\end{frame}  
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Séries temporais regulares}
+
+\begin{overprint}
+  
+\onslide<1>
+
+Com uma variável:
+  
+<<>>=
+ts(rnorm(10), start = 1990, frequency = 1)
+@ 
+
+\onslide<2>
+
+<<>>=
+(k <- ts(rnorm(10), frequency = 12, start = c(1959, 2)))
+@   
+
+\onslide<3>
+
+Com mais de uma variável:
+
+<<>>=
+(m <- ts(matrix(rnorm(30), 10, 3), start = c(1961, 6), frequency = 12))
+@ 
+
+\onslide<4>
+
+<<fig=TRUE,eps=FALSE>>=
+plot(k)
+@ 
+
+\onslide<5>
+
+<<fig=TRUE,eps=FALSE>>=
+plot(m)
+@ 
+
+\onslide<6>
+
+<<fig=TRUE,eps=FALSE>>=
+plot(m, plot.type = "single", col = 1:3)
+@ 
+
+\onslide<7>
+
+Operando com séries temporáis: \texttt{diff}, \texttt{lag},
+\texttt{start}, \texttt{end}, \texttt{window}
+
+\begin{scriptsize}
+<<>>=
+a <- ts(rnorm(10), frequency = 4, start = c(1959, 2))
+b <- ts(rnorm(10), frequency = 4, start = c(1960, 1))
+cbind(a,b)
+@ 
+\end{scriptsize}  
+
+\end{overprint}  
+\end{frame}  
+
+
+\frame{\frametitle{Séries temporais irregulares}
+\begin{itemize}
+  \item Pacote \texttt{its}
+  \item Pacote \texttt{zoo}
+  \item Pacote \texttt{tseries}
+\end{itemize}    
+}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Merge}
+\begin{overprint}  
+
+\onslide<1>
+
+<<>>=
+x <- zoo(rnorm(5), seq(as.Date("2011-01-01"), length = 5, by = "days"))
+y <- zoo(rnorm(5), seq(as.Date("2011-01-04"), length = 5, by = "days"))
+cbind(x,y)
+@ 
+
+\onslide<2>
+
+<<>>=
+merge(x, y, all=FALSE)
+@ 
+
+Veja mais opções em \texttt{?merge.zoo}!
+
+\onslide<3>
+
+<<>>=
+Sq1 <- read.table(file = "squid1.txt", header = TRUE, stringsAsFactors=FALSE)
+head(Sq1)
+@ 
+
+\onslide<4>
+
+<<>>=
+Sq2 <- read.table(file = "squid2.txt", header = TRUE, stringsAsFactors=FALSE)
+head(Sq2)
+@ 
+
+\onslide<5>
+
+Qual a diferença?
+
+<<>>=
+dim(Sq1)
+dim(Sq2)
+unique(c(Sq1$Sample[-1],Sq1$Sample[length(Sq1$Sample)]) - Sq1$Sample)
+unique(c(Sq2$Sample[-1],Sq2$Sample[length(Sq2$Sample)]) - Sq2$Sample)
+@ 
+
+\onslide<6>
+
+<<>>=
+SquidMerged <- merge(Sq1, Sq2, by = "Sample")
+head(SquidMerged)
+@ 
+
+Teoria dos conjuntos:
+<<>>=
+setdiff(Sq1$Sample, Sq2$Sample)
+@ 
+Veja mais em \texttt{?intersect}.
+
+\onslide<7>
+
+<<>>=
+SquidMerged <- merge(Sq1, Sq2, by = "Sample", all= TRUE)
+SquidMerged[1:10,]
+@ 
+
+\end{overprint}  
+\end{frame}  
+
+\begin{frame}[containsverbatim]
+  \frametitle{Interação com o ambiente}
+  
+<<>>=
+x <- 35
+cat("x tem o valor de ", x, "\t Estranho?\n")
+@   
+  
+<<eval=FALSE>>=
+scan()
+scan(4)
+scan(what=character())
+@   
+
+\end{frame}
+
+
+\end{document}

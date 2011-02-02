@@ -1,0 +1,277 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\mode<presentation>
+{
+  \usetheme[secheader]{Boadilla}
+  \setbeamercovered{transparent}
+}
+
+\title{Introdução ao R: aula 6}
+\author{Alexandre Rademaker}
+\institute{EMAp/FGV}
+
+\begin{document}
+
+\setkeys{Gin}{width=.6\textwidth}
+
+<<echo=FALSE>>=
+options(width=50)
+options(continue=" ")
+@ 
+
+\frame{\titlepage}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Condicional}
+\begin{overprint}
+  
+\onslide<1>
+
+<<>>=
+x <- 3
+if( x > 2) y <- 2*x else y <- 3*x
+if( x > 2) {
+  y <- 2*x
+} else { 
+  y <- 3*x
+}
+@ 
+
+\onslide<2>
+
+<<>>=
+x <- rnorm(5, sd = 10)
+ifelse(x < 0, "-", "+")
+@ 
+
+\onslide<3>
+
+<<>>=
+vs <- rnorm(10)
+switch(1, mean(vs), median(vs), sum(vs))
+semaforo <- "verde"
+switch(semaforo, verde = "continua", amarelo = "acelera", vermelho = "para")
+@ 
+
+\end{overprint}
+\end{frame}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Repetição}
+\begin{overprint}
+  
+\onslide<1>
+
+<<echo=TRUE>>=
+Fibonacci <- numeric(12)
+Fibonacci[1] <- Fibonacci[2] <- 1
+for(i in 3:12) Fibonacci[i] <- Fibonacci[i - 2] + Fibonacci[i - 1]
+Fibonacci
+@ 
+
+\onslide<2>
+
+<<>>=
+x <- rnorm(10)
+k <- 0
+for(v in x){
+  if (v > 0) 
+    y <- v
+  else 
+    y <- 0
+  k <- k + y
+}
+k
+@ 
+
+<<>>=
+k <- sum(x[x > 0])
+@ 
+
+\onslide<3>
+
+<<echo=TRUE>>=   
+Fib1 <- 1
+Fib2 <- 1
+Fibonacci <- c(Fib1, Fib2)
+while (Fib2 < 100) {
+  Fibonacci <- c(Fibonacci, Fib2)
+  oldFib2 <- Fib2
+  Fib2 <- Fib1 + Fib2
+  Fib1 <- oldFib2
+}
+Fibonacci
+@
+
+\onslide<4>
+
+<<eval=FALSE>>=
+texto <- c() 
+repeat {
+  cat('Introduza uma frase ? (frase vazia termina) ') 
+  fr <- readLines(n=1) 
+  if (fr == '') break else texto <- c(texto,fr)
+}
+@ 
+
+\onslide<5>
+
+<<eval=FALSE>>=
+repeat { 
+  cat('Introduza um nro positivo ? (zero termina) ') 
+  nro <- scan(n=1) 
+  if (nro < 0) next 
+  if (nro == 0) break 
+  pos <- c(pos,nro)
+}
+@ 
+
+\end{overprint}
+\end{frame}
+
+
+\begin{frame}[containsverbatim]
+  \frametitle{Funções}
+
+<<echo=TRUE>>=
+hipotenusa <- function(a, b) {
+  h <- sqrt(a^2 + b^2)
+  h
+}
+hipotenusa(4, 3)
+hipotenusa(c(4,5,6), c(3,4,5))
+@ 
+
+Usando o \texttt{edit()}.
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{$\lambda$: funções sem nome!}
+
+<<>>=
+(function(x) {y <- 10; x*y})(10)
+@   
+
+\end{frame}
+
+
+\begin{frame}[containsverbatim]
+  \frametitle{Funções: argumentos}
+
+<<echo=TRUE>>=
+fx <- function(a, b = 10) sqrt(a^2 + b^2)
+fx(12)
+fx <- function(a, b = 10) c(a,b,sqrt(a^2 + b^2))
+fx(10)
+fx(b = 1, a=12)
+@ 
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Escopo}
+
+<<echo=TRUE>>=
+x <- 5
+f <- function() {
+  x <- 6
+  x
+}
+f()
+x
+@ 
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Escopo}
+
+<<echo=TRUE>>=
+x <- 5
+f <- function() print(x)
+f()
+rm(x)
+@ 
+
+O que ocorre se executarmos \texttt{f()} agora?
+\end{frame}
+
+
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Lazy evaluation}
+\begin{overprint}
+  
+\onslide<1>
+
+<<>>=
+f1 <- function(a1, a2 = sqrt(a1)) {
+  a1 <- a1^2
+  a2
+}
+f1(4)
+@   
+
+\onslide<2>
+
+<<>>=
+f2 <- function(a1, a2 = sqrt(a1)) {
+  z <- a2/a1
+  a1 <- a1^2
+  a2
+}
+f2(4)
+@ 
+
+\end{overprint}
+\end{frame}  
+
+
+<<echo=FALSE>>=
+quadratic <- function (a, b, c) {
+  rad <- b^2 - 4 * a * c
+  if(is.complex(rad) || all(rad >= 0)) {
+    rad <- sqrt(rad)
+  }
+  else {
+    rad <- sqrt(as.complex(rad)) 
+  }
+  cbind(-b - rad, -b + rad) / (2 * a)
+}
+@ 
+
+
+\begin{frame}[containsverbatim]
+  \frametitle{Exercício}
+
+Escrever a função para cálculos das raizes de uma função
+quadrática. Testes:
+  
+<<>>=
+args(quadratic)
+quadratic(1, -5, 6)
+@
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Exercício: vetores como argumentos}
+
+Mas a função também deve receber listas de valores em cada argumento:
+
+<<>>=
+quadratic(1, c(-5, 1), 6)
+@ 
+\end{frame}
+
+
+\begin{frame}[containsverbatim]
+  \frametitle{Exercício: resposta}
+
+<<>>=
+quadratic
+@ 
+\end{frame}
+
+\end{document}
