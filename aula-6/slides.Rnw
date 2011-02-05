@@ -24,6 +24,28 @@ options(continue=" ")
 
 \frame{\titlepage}
 
+\begin{frame}[<+->][containsverbatim,fragile]
+  \frametitle{Blocos}
+
+<<>>=
+a <- {
+  x <- 10
+  y <- 20
+}
+a
+@
+
+Atribuições retornam o valor atribuído. Blocos retornam o valor da
+última expressão. Em R, um bloco é também uma expressão assim como
+atribuição. Por isso também podemos escrever:
+
+<<>>=
+z <- w <- 10
+c(z,w)
+@ 
+  
+\end{frame}  
+
 
 \begin{frame}[<+->][containsverbatim,fragile]
   \frametitle{Condicional}
