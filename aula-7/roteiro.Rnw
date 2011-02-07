@@ -1,0 +1,295 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage[margin=2.5cm,a4paper]{geometry}
+
+\begin{document}
+
+% \setlength{\columnsep}{20pt}
+% \setlength{\columnseprule}{.5pt}
+\setkeys{Gin}{width=0.9\textwidth}
+
+\title{Introdução ao R -- 2011 \\ Leitura de dados do BCB}
+\author{Alexandre Rademaker}
+\maketitle
+
+<<echo=FALSE>>=
+options(width=80)
+options(continue=" ")
+@ 
+
+
+\section{Bibliotecas}
+
+A principal biblioteca que usaremos é a \texttt{SSOAP}, disponível no
+site \url{http://omegahat.org/R}. Na realidade, encontrei um pequeno
+bug na biblioteca que corrigi e diponibilizei para o autor. Segundo o
+autor, a biblioteca já foi corrigida. Quem tiver problemas, também
+pode recorrer a versão que disponibilizei em
+\url{https://github.com/arademaker/SSOAP}.
+
+A instalação da biblioteca \texttt{SSOAP} pode ser feita com o
+seguinte comando. 
+
+<<eval=FALSE>>=
+install.packages("SSOAP", repos = "http://www.omegahat.org/R", type = "source")
+@  
+
+Para instalar a minha versão, o primeiro passo é fazer o download em
+formato \texttt{tar.gz} do GitHub e depois executar:
+
+<<eval=FALSE>>=
+install.packages("SSOAP.tar.gz", repos = NULL, type = "source")
+@  
+
+Obviamente, adicionando o caminho para o arquivo \texttt{SSOAP.tar.gz}
+se este não estiver no mesmo diretório retornado pelo comando
+\texttt{getwd()}.
+
+Também precisaremos de outras duas bibliotecas. A \texttt{XML} será
+usada para ler arquivos XML e a \texttt{RCurl} para baixar arquivos de
+um dado endereço da internet.
+
+<<>>=
+library(SSOAP)
+library(XML)
+library(RCurl)
+@ 
+
+\section{O arquivo de serviços}
+
+Nosso primeiro objetivo é recuperar o arquivo \texttt{WSDL} que contém
+as definições das funções disponibilizadas pelo site do BCB para
+recuperação de séries temporais. O BCB disponibiliza seus serviços em
+um endereço \texttt{https} cujo certificado está expirado. Para
+contornar este problema, nossa requisição terá um argumento adicional
+que faz a requisição a uma url \texttt{https} ignorar a verificação do
+certificado digital.
+
+<<>>=
+wsdl <- getURL("https://www3.bcb.gov.br/sgspub/JSP/sgsgeral/FachadaWSSGS.wsdl", 
+               ssl.verifypeer = FALSE)
+@  
+
+A variável \texttt{wsdl} contém agora um texto, o conteúdo do arquivo
+\texttt{FachadaWSSGS.wsdl} baixado do site do BCB. Este conteúdo é um
+arquivo XML, cuja estrutura deve ser carregada em memória para poder
+ser inspecionada. Fazemos isso com a função
+\texttt{xmlInternalTreeParse} do pacote \texttt{XML}.
+
+<<>>=
+doc  <- xmlInternalTreeParse(wsdl)
+@  
+
+Com a estrutura do arquivo corretamente carregada, usamos a função
+\texttt{processWSDL} do pacote \texttt{SSOAP} para reconhecer as
+funções disponibilizadas pelo BCB e criar funções em R que poderão ser
+usadas como qualquer outra função que tivessemos programado em R. 
+
+<<>>=
+bcbdef <- processWSDL(doc)
+ff  <- genSOAPClientInterface(def = bcbdef)
+@  
+
+A variável \texttt{ff} contém agora uma estrutura de dados bastante
+complexa, com todas as definições de funções do site do BCB e tipos de
+dados. Não irei descrever aqui toda a estrutura. No decorrer do texto
+ficará claro seu uso.
+
+
+\section{Recuperando Dados}
+
+Para facilitar o desenvolvimento, selecionei um pequeno conjunto de
+códigos de séries temporais do site do BCB para trabalhar. Obviamente,
+este processo foi manual, visitando o site do BCB, consultando as
+séries disponíveis e anotando seus códigos para depois criar o vetor:
+
+<<>>=
+codigos <- c(4606, 4607, 4608, 4609, 4610, 4611, 4612, 4613, 4614, 4615, 4616)
+data.ini <- "01/01/1998"
+data.fim <- "01/01/2011"
+@  
+
+O passo principal agora é recuperar as séries temporais desejadas em
+um dado período. A função que usaremos é a função
+\texttt{getValoresSeriesXML} que estava definida no arquivo
+\texttt{WSDL} que baixamos e foi gerada em R pelo comando
+\texttt{processWSDL}. 
+
+<<recupera, eval=FALSE>>=
+xmlstr <- ff@functions$getValoresSeriesXML(codigos, data.ini, data.fim, ssl.verifypeer = FALSE)
+doc <- xmlInternalTreeParse(xmlstr)
+@ 
+
+Finalmente o processamento dos dados recebidos. Desejamos percorrer o
+conteúdo do arquivo
+XML~\footnote{\url{http://en.wikipedia.org/wiki/XML}} recebido
+procurando pelas tags \texttt{SERIE} e transformando todo o conteúdo
+dentro destas em um data frame. É exatamente isto que o trecho de
+código a seguir faz e retorna uma lista de data frames na variável
+\texttt{series}. A função \texttt{xpathApply} recebe um documento, uma
+string XPATH~\footnote{\url{http://en.wikipedia.org/wiki/XPath}} e uma
+função para ser aplicada a cada nó selecionado pela expressão XPATH
+aplicada ao documento.
+
+<<processa, eval=FALSE>>=
+series <- xpathApply(doc,"//SERIE", function(s) {
+  id <- xmlGetAttr(s, "ID")
+  s1 <- xmlSApply(s, function(x) xmlSApply(x, xmlValue))
+  s1 <- t(s1)
+  dimnames(s1) <- list(NULL, dimnames(s1)[[2]])
+  df <- as.data.frame(s1, stringsAsFactors=FALSE)
+  df$SERIE <- id
+  df
+})
+@ 
+
+A lista de data frames é então transformada em um único data frame com
+a aplicação da função \texttt{rbind} sucessivas vezes. Isto é feito
+com o comando \texttt{Reduce}.
+
+<<merge, eval=FALSE>>=
+df <- Reduce(rbind, series)
+@ 
+
+Por último, realizamos uma limpeza nos dados, transformando a coluna
+de datas em tipo \texttt{Date}, a coluna dos valores em tipo numérico
+e a coluna com os identificadores de séries em \texttt{Factor}. As
+colunas antigas são então removidas se a variável \texttt{remove.old}
+estiver com valor \texttt{TRUE}, vide a seguir.
+
+<<limpeza, eval=FALSE>>=
+df$data  <- as.Date(sapply(strsplit(df$DATA,  "/"),
+                           function(x) paste(c(x[2:1], 1), collapse="-")), "%Y-%m-%d")
+df$valor <- as.numeric(df$VALOR)
+df$serie <- factor(df$SERIE)
+if(remove.old){
+  df$BLOQUEADO <- NULL
+  df$SERIE <- NULL
+  df$DATA <- NULL
+  df$VALOR <- NULL
+}
+@ 
+
+Estes trechos de código acima podem ser unidos no corpo de uma função
+quer receberá um vetor de códigos, datas de início e fim e a variável
+\texttt{remove.old}. A função retorna o data frame resultante.
+
+<<>>=
+getSeries <- function(codigos, data.ini = "01/01/1998", data.fim = "01/01/2011", remove.old = TRUE) {
+<<recupera>>
+<<processa>>
+<<merge>>
+<<limpeza>>
+df
+}
+@ 
+
+\section{Agregando os dados}
+
+Um típico uso dos dados seria agrega-los por ano. Temos duas formas de
+fazer isso. Vamos começar usando a função \texttt{aggregate}. O
+primeiro passo é, usando a função criada na seção anterior, recuperar
+os dados das séries desejadas. Vamos usar os valores default para o
+intervalo de datas. 
+
+<<>>=
+df <- getSeries(codigos)
+@  
+
+Vejamos as primeiras linhas do data frame retornado.
+
+<<>>=
+head(df)
+@ 
+
+Para agregar os dados por ano, precisamos extrair o componente ano das
+datas. Isto pode ser feito com a função \texttt{cut}. Na realidade,
+trata-se da função \texttt{cut.Date} que foi selecionada pelo R pelo
+fato da entrada passada para a \texttt{cut} serem do tipo
+\texttt{Date}.
+
+<<>>=
+tmp <- df
+tmp$year <- cut(tmp$data, "year")
+@ 
+
+Agora podemos agregar os valor por cada combinação de ano e
+série. Para cada subconjunto de valores iremos calcular a média.
+
+<<>>=
+tmp <- aggregate(valor ~ year + serie, data = tmp, FUN = mean)
+head(tmp)
+@ 
+
+Uma outra forma de agregar os dados seria usando a biblioteca
+\texttt{sqldf}. Com ela, podemos manipular data frames como tabelas de
+um banco de dados relacional. Não sou particularmente um fã desta
+abordagem, mas é bom saber que existe a alternativa. Observe ainda
+como a string SQL poderia ser facilmente construída em tempo de
+execução. Obviamente, neste caso, ela poderia ter sido passada como
+uma única string.
+
+<<>>=
+library(sqldf)
+colunas <- c(maximum = "max(valor)", minimum = "min(valor)", soma = "sum(valor)", serie = "serie")
+mysql <- paste("select", 
+               paste(apply(cbind(colunas, names(colunas)), 1, paste, collapse=" "), collapse = ", "), 
+               "from df group by serie")
+sqldf(mysql)
+@ 
+
+\section{Visualizando os dados}
+
+Para plotar os dados, vamos usar a biblioteca
+\texttt{ggplot2}~\footnote{\url{http://had.co.nz/ggplot2/}}. 
+
+<<>>=
+library(ggplot2)
+@ 
+
+Não entrarei nos detalhes do uso desta biblioteca, mas os comandos
+abaixo dão uma boa idéia do que pode ser feito. Observe que os dados
+são agregados pela função \verb|scale_x_date|. Os códigos das séries
+servem para definir as cores, ajudando assim a diferenciar as séries
+(representadas por linhas). O resultado da impressão da variável
+\texttt{p} está na figura~\ref{fig:plot}.
+
+<<>>=
+p <- qplot(data, valor, data = df, colour = serie, geom = "line") + scale_x_date(format = "%Y") + opts(axis.text.x=theme_text(angle=90, hjust=0))
+@ 
+
+\begin{figure}[htbp]
+\begin{center}
+<<fig=TRUE,echo=FALSE,eps=FALSE>>=
+print(p)
+@ 
+\end{center}
+\caption{Dados por ano e por série}\label{fig:plot}
+\end{figure}
+
+O mesmo gráfico poderia ainda ser produzido por outras funções do
+pacote ggplot2. Na realidade, a função qplot é bastante limitada
+quando comparada com a ggplot.
+
+<<>>=
+p1 <- ggplot(df, aes(x = data, y = valor, group = serie, colour = serie)) +
+  geom_point() + geom_line() + theme_bw() + opts(panel.grid.major = theme_blank()) +
+  xlab(NULL) + ylab(NULL) + opts(axis.text.x=theme_text(angle=90, hjust=0))
+@  
+
+\begin{figure}[htbp]
+\begin{center}
+<<fig=TRUE,echo=FALSE,eps=FALSE>>=
+print(p1)
+@ 
+\end{center}
+\caption{Dados por ano e por série: alternativa 1}\label{fig:plot2}
+\end{figure}
+
+
+\end{document}
