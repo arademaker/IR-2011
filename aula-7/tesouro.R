@@ -18,7 +18,6 @@ sapply(urls, function(u) system(paste("curl", u, "-o", tail(strsplit(u, "/")[[1]
 # http://cran.r-project.org/doc/manuals/R-data.html#Reading-Excel-spreadsheets
 # http://www.johndcook.com/r_excel_clipboard.html
 # http://www.omegahat.org/RSXML/
-# http://www.omegahat.org/SSOAP/
 # http://www4.bcb.gov.br/pec/series/port/aviso.asp
 # http://en.wikipedia.org/wiki/RExcel
 

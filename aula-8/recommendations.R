@@ -65,7 +65,7 @@ topMatches <- function(prefs, person, n = NA, similarity = simDistance) {
 ##                      stringsAsFactors=FALSE), Var1 != Var2, select=c(1,2))
 
 
-getRecommendation <- function(prefs, person, similarity = simDistance) {
+getRecommendations <- function(prefs, person, similarity = simDistance) {
   data <- prefs[prefs$person != person & prefs$rank > 0,]
 
   # data$similarity <- apply(data, 1, function(x) similarity(prefs, person, x[1]))
