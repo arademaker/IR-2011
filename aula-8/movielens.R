@@ -6,9 +6,9 @@ names(movies) <- c("movieid","movie")
 rank   <- read.table("ml-data/u.data", sep = "\t", header = FALSE, stringsAsFactors = FALSE,
                      col.names = c("userid","movieid","rating","ts"))
 
-prefs <- merge(movies, rank, by = "movieid")
-prefs$movieid <- NULL
-prefs$ts <- NULL
-names(prefs) <- c("item","person","rank")
+critics <- merge(movies, rank, by = "movieid")
+critics$movieid <- NULL
+critics$ts <- NULL
+names(critics) <- c("item","person","rank")
 
 

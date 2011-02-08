@@ -48,10 +48,10 @@ simPearson2 <- function(prefs, person1, person2) {
 data <- as.data.frame(table(critics$person, critics$person))
 data$Freq <- NULL
 names(data) <- c("person.x","person.y")
-data$distance <- apply(data, 1, function(x) simPearson1(critics, x[1], x[2]))
+data$similarity <- apply(data, 1, function(x) simPearson1(critics, x[1], x[2]))
 
 
-topMatches <- function(prefs, person, n = NA, similarity = simDistance) {
+topMatches <- function(prefs, person, n = NA, similarity = simPearson1) {
   dummy <- sapply(unique(prefs$person), function(x) similarity(prefs, person, x))
   dummy <- dummy[-which(names(dummy) == person)]
   if(!is.na(n)){
@@ -63,39 +63,28 @@ topMatches <- function(prefs, person, n = NA, similarity = simDistance) {
 }
 
 
-## Exercicio: O que faz a expressao abaixo?
+### Exercicio: O que faz a expressao abaixo?
 ## 
 ## subset(as.data.frame(table(unique(critics$person),rep("Toby", 7)),
 ##                      stringsAsFactors=FALSE), Var1 != Var2, select=c(1,2))
 
 
-getRecommendation <- function(prefs, person, similarity = simDistance) {
-  data <- prefs[prefs$person != person & prefs$rank > 0,]
-
-  # data$similarity <- apply(data, 1, function(x) similarity(prefs, person, x[1]))
-  dummy <- data.frame(person = unique(data$person), me = person)
-  dummy$similarity <- apply(dummy, 1, function(x) similarity(prefs, x[1], x[2]))
-  data <- merge(data, dummy)
-
-  # rank weighted by similarity
-  data$srank <- data$rank * data$similarity
-
-  # alternative 1
-  ## sum.srank <- aggregate(srank ~ item, data, sum)
-  ## sum.sim <- aggregate(similarity ~ item, data, sum)
-  ## dummy <- merge(sum.srank,sum.sim)
-  ## dummy$rank <- dummy$srank / dummy$similarity
-  ## dummy[order(dummy$rank, decreasing=TRUE),c("item","rank")]
-
-  ## alternativa 2
+getRecommendation <- function(prefs, person, similarity = simPearson1) {
+  haveseen <- prefs[prefs$person == person,"item"]
+  data <- prefs[(! prefs$item %in% haveseen) & prefs$rank > 0,]
+  
+  data$similarity <- sapply(data$person, function(x) similarity(prefs, person, x[1]))
+  data$srank <- with(data, rank * similarity)
+  
+  ### alternativa 2
   ## dummy <- sapply(split(data, data$item),
   ##                 function(df) sum(df$srank) / sum(df$similarity))
-  # d <- as.data.frame(dummy)
-  # d$movies <- rownames(d)
-  # rownames(d) <- NULL
-  # d[order(d$d, decreasing=TRUE),]
+  ## d <- as.data.frame(dummy)
+  ## d$movies <- rownames(d)
+  ## rownames(d) <- NULL
+  ## d[order(d$d, decreasing=TRUE),]
 
-  # alternativa 3
+  ### alternativa 3
   ## library(reshape)
   ## mdata <- melt(data[,c("person","item","similarity","srank")])
   ## d <- as.data.frame(cast(mdata, item ~ variable, sum))
@@ -109,9 +98,8 @@ getRecommendation <- function(prefs, person, similarity = simDistance) {
 }
 
 
-## ITEM BASED
-# Diff python implementation
-# names/data.frames versus dict
+### ITEM BASED
+## Diff python implementation: names/data.frames versus dict
 
 calculateSimilarItems <- function(prefs, n = 10, similarity = simDistance){
   names(prefs) <- c("item", "person", "rank")
@@ -125,7 +113,16 @@ calculateSimilarItems <- function(prefs, n = 10, similarity = simDistance){
 
 
 getRecommendedItems <- function(prefs, itemMatch, person){
-  ...
-}
+  personRating <- prefs[prefs$person == person,]
+  sims <- itemMatch[! itemMatch$item.y %in% personRating$item,]
 
+  dummy <- merge(personRating, sims, by.x = "item", by.y = "item.x")
+  dummy$srank <- with(dummy, rank * similarity)
+
+  a <- aggregate(similarity ~ item.y, dummy, sum)
+  b <- aggregate(srank ~ item.y, dummy, sum)
+  predict <- merge(a,b)
+  predict$ranks <-  with(predict, srank / similarity)
+  predict[order(predict$ranks, decreasing=TRUE), c(1,4)]
+}
 
