@@ -1,5 +1,5 @@
 
-source("movielens.R")
+critics <- read.table("critics.text", sep="|", header=TRUE, stringsAsFactors = FALSE)
 
 simDistance <- function(prefs, person1, person2) {
   a <- prefs[prefs$person == person1,]
@@ -44,9 +44,16 @@ simPearson2 <- function(prefs, person1, person2) {
 }
 
 
-topMatches <- function(prefs, person, n = NA, similarity = simDistance) {
-  others <- setdiff(unique(prefs$person), person)
-  dummy <- sapply(others, function(x) similarity(prefs, person, x))
+# todos os pares de pessoas
+data <- as.data.frame(table(critics$person, critics$person))
+data$Freq <- NULL
+names(data) <- c("person.x","person.y")
+data$similarity <- apply(data, 1, function(x) simDistance(critics, x[1], x[2]))
+
+
+topMatches <- function(prefs, person, n = NA, similarity = simPearson1) {
+  dummy <- sapply(unique(prefs$person), function(x) similarity(prefs, person, x))
+  dummy <- dummy[-which(names(dummy) == person)]
   if(!is.na(n)){
     n <- min(n, length(dummy))
     dummy[order(dummy, decreasing=TRUE)][1:n]
@@ -62,31 +69,13 @@ topMatches <- function(prefs, person, n = NA, similarity = simDistance) {
 ##                      stringsAsFactors=FALSE), Var1 != Var2, select=c(1,2))
 
 
-getRecommendations <- function(prefs, person, similarity = simDistance) {
+getRecommendation <- function(prefs, person, similarity = simPearson1) {
   haveseen <- prefs[prefs$person == person,"item"]
   data <- prefs[(! prefs$item %in% haveseen) & prefs$rank > 0,]
-
-  # data$similarity <- sapply(data$person, function(x) similarity(prefs, person, x[1]))  
-  dummy <- data.frame(person = unique(data$person), me = person)
-  dummy$similarity <- apply(dummy, 1, function(x) similarity(prefs, x[1], x[2]))
-  data <- merge(data, dummy)
+  
+  data$similarity <- sapply(data$person, function(x) similarity(prefs, person, x))
   data$srank <- with(data, rank * similarity)
   
-  ### alternativa 2
-  ## dummy <- sapply(split(data, data$item),
-  ##                 function(df) sum(df$srank) / sum(df$similarity))
-  ## d <- as.data.frame(dummy)
-  ## d$movies <- rownames(d)
-  ## rownames(d) <- NULL
-  ## d[order(d$d, decreasing=TRUE),]
-
-  ### alternativa 3
-  ## library(reshape)
-  ## mdata <- melt(data[,c("person","item","similarity","srank")])
-  ## d <- as.data.frame(cast(mdata, item ~ variable, sum))
-  ## d$rank <- d$srank / d$similarity
-  ## d[order(d$rank, decreasing=TRUE),c("movie","rank")]
-
   d <- as.data.frame(as.table(by(data, data$item,
                                  function(df) sum(df$srank) / sum(df$similarity))),
                      responseName = "rank")
@@ -98,11 +87,11 @@ getRecommendations <- function(prefs, person, similarity = simDistance) {
 ## Diff python implementation: names/data.frames versus dict
 
 calculateSimilarItems <- function(prefs, n = 10, similarity = simDistance){
-  names(prefs) <- c("person", "item", "rank")
+  names(prefs) <- c("item", "person", "rank")
   ranks <- Reduce(rbind, lapply(unique(prefs$person),
                                 function(x) {
-                                  tt <- topMatches(prefs, x, n = n, similarity = similarity)
-                                  data.frame(item.x = x, item.y = names(tt), similarity = tt, row.names = NULL)
+                                  t <- topMatches(prefs, x, n = n, similarity = similarity)
+                                  data.frame(item.x = x, item.y = names(t), similarity = t, row.names = NULL)
                                 }))
   ranks
 }
