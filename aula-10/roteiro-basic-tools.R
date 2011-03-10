@@ -13,14 +13,15 @@ str(BFCases)
 Cases  <- rowSums(BFCases[,2:16])
 names(Cases) <- BFCases[,1]
 
-# Histogram
-hist(iris$Petal.Width)
-
 # Piechart
 par(mfrow = c(2,2), mar = c(3, 3, 2, 1))
 pie(Cases , main = "Ordinary pie chart")
-pie(Cases , col = gray(seq(0.4,1.0,length=6)), clockwise=TRUE, main = "Grey colours")
 pie(Cases , col = rainbow(6),clockwise = TRUE, main="Rainbow colours")
+pie(Cases , col = gray(seq(0.4,1.0,length=6)), clockwise=TRUE, main = "Grey colours")
+
+# Histogram
+hist(iris$Petal.Width)
+
 
 
 # 3D Exploded Pie Chart
@@ -30,7 +31,7 @@ pie3D(Cases , labels = names(Cases ), explode = 0.1,
       
 
 # Salvando opcoes antes de alterar
-op <- par(mfrow = c(2,2), mar = c(3, 3, 2, 1))
+op <- par(mfrow = c(1,4), mar = c(3, 3, 2, 1))
 pie(Cases , main = "Ordinary pie chart")
 pie(Cases , col = gray(seq(0.4,1.0,length=6)),
     clockwise=TRUE, main = "Grey colours")
@@ -43,7 +44,7 @@ par(op)
       
 # Barplots
 
-barplot(table(subset(iris, Petal.Width > 1)$Species))
+a <- barplot(table(subset(iris, Petal.Width > 1)$Species))
 
 BFDeaths <- read.table(file="BirdFluDeaths.txt", header = TRUE, sep="\t")
 
@@ -64,7 +65,7 @@ barplot(t(Counts), col = gray(c(0.5,1)))
 Benthic <- read.table(file = "RIKZ2.txt", header = TRUE, sep="\t")
 Bent.M <- tapply(Benthic$Richness, INDEX=Benthic$Beach, FUN=mean)
 Bent.sd <- tapply(Benthic$Richness, INDEX=Benthic$Beach, FUN=sd)
-MSD<- cbind(Bent.M, Bent.sd)
+MSD <- cbind(Bent.M, Bent.sd)
 
 
 # Cores, arrows 

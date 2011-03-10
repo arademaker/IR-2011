@@ -47,7 +47,6 @@ plot(x = Veg$BARESOIL, y = Veg$R,
      pch = Veg$fTransect)
      
 
-
 # Criando variavel auxiliar
 Veg$Time2 <- ifelse(Veg$Time <= 1974, 1, 16)
 
@@ -78,7 +77,7 @@ plot(x,col=x)
 
 
 Veg$Time2 <- ifelse(Veg$Time <= 1974, 15, 16)
-Veg$Col2  <- ifelse(Veg$Time <= 1974, 1, 2)
+Veg$Col2  <- ifelse(Veg$Time <= 1974, 3, 5)
 
 plot(x = Veg$BARESOIL, y = Veg$R,
      xlab = "Exposed soil",
@@ -94,13 +93,13 @@ plot(x = Veg$BARESOIL, y = Veg$R,
      xlim = c(0, 45), ylim = c(4, 19),
      pch = 16, cex = 1.5)
 
-Veg$Cex2 <- ifelse(Veg$Time == 2002, 2, 1)
+Veg$Cex2 <- ifelse(Veg$Time == 2002, 4, 1)
 
 plot(x = Veg$BARESOIL, y = Veg$R,
      xlab = "Exposed soil",
      ylab = "Species richness", main = "Scatter plot",
      xlim = c(0, 45), ylim = c(4, 19),
-     pch = 16, cex = Veg$Transect / 4)
+     pch = 16, col = Veg$Col2, cex = Veg$Transect / 4)
 
 
 ## Salvando arquivo

@@ -1,25 +1,30 @@
 
 
-## No windows pode ser mais complicado!
-# install.packages("SSOAP", repos = "http://www.omegahat.org/R", type = "source")
+## No windows pode ser mais complicado instalar os pacotes SSOAP e
+## RCurl. Tem uma versão binária ro RCurl disponivel, vide
+## http://cran.r-project.org/bin/windows/contrib/r-release/ReadMe
+
+# O pacote SSOAP deve conseguir ser instalado via:
+# > install.packages("SSOAP", repos = "http://www.omegahat.org/R", type = "source")
+
+
 library(SSOAP)
 library(XML)
-
+library(RCurl)
 
 ## Recuperar arquivo WSDL
-# certificado do BCB esta expirado. Por isso ssl false
+## certificado do BCB esta expirado. Por isso ssl false
 library(RCurl)
 wsdl <- getURL("https://www3.bcb.gov.br/sgspub/JSP/sgsgeral/FachadaWSSGS.wsdl", ssl.verifypeer = FALSE)
 doc  <- xmlInternalTreeParse(wsdl)
 
-# process WSDL
-# def <- processWSDL("FachadaWSSGS.wsdl")
+# Alternativa, baixar o arquivo WSDL manualmente, colocar no diretório
+# do script e executar.
+# > def <- processWSDL("FachadaWSSGS.wsdl")
+
 def <- processWSDL(doc)
 ff  <- genSOAPClientInterface(def = def)
-codigos <- c(4606, 4607, 4608, 4609, 4610, 4611, 4612, 4613, 4614, 4615, 4616)
 
-# series <- xmlChildren(xmlChildren(doc)[[1]])
-# length(series)
 
 getSeries <- function(codigos, data.ini = "01/01/1998", data.fim = "01/01/2011", remove.old = TRUE) {
   xmlstr <- ff@functions$getValoresSeriesXML(codigos, data.ini, data.fim, ssl.verifypeer = FALSE)
@@ -49,6 +54,12 @@ getSeries <- function(codigos, data.ini = "01/01/1998", data.fim = "01/01/2011",
   }
   df
 }
+
+
+## Recuperando os dados
+codigos <- c(4606, 4607, 4608, 4609, 4610, 4611, 4612, 4613, 4614, 4615, 4616)
+df <- getSeries(codigos)
+
 
 
 ## Agregando dados
